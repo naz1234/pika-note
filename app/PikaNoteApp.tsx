@@ -612,7 +612,7 @@ export function PikaNoteApp() {
             </div>
 
             <footer className="editor-toolbar">
-              <input ref={fileInputRef} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/gif" capture="environment" multiple onChange={(event) => void uploadImages(event.target.files)} />
+              <input ref={fileInputRef} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={(event) => void uploadImages(event.target.files)} />
               <button onClick={() => fileInputRef.current?.click()} disabled={uploading || draft.attachments.length >= 12}><span aria-hidden="true">▧</span><span>Photo</span></button>
               <div className="color-picker" aria-label="Note color">
                 {(["yellow", "coral", "sage", "lavender", "sky"] as NoteColor[]).map((color) => (
