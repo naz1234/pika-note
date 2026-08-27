@@ -17,21 +17,23 @@ test("the production build contains the Pika Note product shell", async () => {
   assert.match(bundle, /Keep a thought\. Find it fast\./i);
   assert.match(bundle, /Find a thought/i);
   assert.match(bundle, /Cloud synced/i);
+  assert.match(bundle, /Shared notebook/);
+  assert.match(bundle, /anyone with the link can view, edit, and delete notes and photos/);
+  assert.doesNotMatch(bundle, /Private by design|ACCESS_REQUIRED|TEAM_DOMAIN|POLICY_AUD/);
   assert.match(layout, /Pika Note — Your notes, wherever you are/i);
   assert.match(manifest, /display:\s*"standalone"/i);
   assert.doesNotMatch(`${bundle}${layout}`, /codex-preview|Your site is taking shape|Starter Project/i);
 });
 
 test("ships Cloudflare persistence and installable-app assets", async () => {
-  const [hosting, wrangler, migration, serviceWorker] = await Promise.all([
-    readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
+  const [wrangler, migration, serviceWorker] = await Promise.all([
     readFile(new URL("../wrangler.jsonc", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_spotty_roughhouse.sql", import.meta.url), "utf8"),
     readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
   ]);
 
-  assert.match(hosting, /"d1":\s*"DB"/);
-  assert.match(hosting, /"r2":\s*"NOTE_IMAGES"/);
+  assert.match(wrangler, /"binding":\s*"DB"/);
+  assert.match(wrangler, /"binding":\s*"NOTE_IMAGES"/);
   assert.match(wrangler, /"name":\s*"pika-note"/);
   assert.match(migration, /CREATE TABLE `notes`/);
   assert.match(migration, /CREATE TABLE `note_images`/);

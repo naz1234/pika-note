@@ -11,7 +11,7 @@
     "start": "vinext start",
     "deploy": "wrangler deploy",
     "types": "wrangler types",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern worker-configuration.d.ts",
     "check": "tsc --noEmit && npm run lint",
     "db:generate": "drizzle-kit generate"
@@ -30,6 +30,7 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.2",
     "@vitejs/plugin-rsc": "0.5.26",
+    "miniflare": "4.20260515.0",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.6",

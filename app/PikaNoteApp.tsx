@@ -1,6 +1,6 @@
 "use client";
 
-/* Private R2 images are intentionally served through authenticated same-origin routes. */
+/* R2 images are served through the public notebook API; the bucket stays private. */
 /* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -112,28 +112,6 @@ function LoadingCards() {
   );
 }
 
-function AccessRequired({ onRetry }: { onRetry: () => void }) {
-  return (
-    <main className="access-screen">
-      <section className="access-card">
-        <BrandMark />
-        <p className="eyebrow">Private by design</p>
-        <h1>Pika Note is ready.</h1>
-        <p className="access-copy">
-          Turn on Cloudflare Access for this Worker, allow your email, then add the TEAM_DOMAIN and POLICY_AUD values in the Worker settings. That keeps the notebook private and lets the same notes follow you to every device.
-        </p>
-        <div className="access-actions">
-          <button className="primary-button" onClick={onRetry}>I turned it on</button>
-          <a className="text-link" href="https://developers.cloudflare.com/workers/configuration/routing/workers-dev/#manage-access-to-workersdev" target="_blank" rel="noreferrer">
-            Open the Cloudflare guide <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-        <p className="access-footnote">Local previews open automatically. A deployed notebook stays locked until Access is enabled and its signed session can be verified.</p>
-      </section>
-    </main>
-  );
-}
-
 function NoteCard({ note, active, onOpen }: { note: Note; active: boolean; onOpen: () => void }) {
   return (
     <button className={`note-card note-card--${note.color}${active ? " is-active" : ""}`} onClick={onOpen} aria-current={active ? "page" : undefined}>
@@ -162,7 +140,6 @@ export function PikaNoteApp() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [accessRequired, setAccessRequired] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
@@ -271,16 +248,18 @@ export function PikaNoteApp() {
       const data = await requestJson<{ notes: Note[] }>("/api/notes?archived=all", { cache: "no-store" });
       notesRef.current = data.notes;
       setNotes(data.notes);
-      for (const note of data.notes) versionsRef.current.set(note.id, note.version);
       const currentId = selectedIdRef.current;
+      for (const note of data.notes) {
+        // A refresh must not advance an unsaved draft's version past another
+        // visitor's edit, otherwise the next save would silently overwrite it.
+        if (note.id !== currentId || !dirtyRef.current) versionsRef.current.set(note.id, note.version);
+      }
       const hashMatch = window.location.hash.match(/^#note=(.+)$/);
       const requestedId = currentId ?? (hashMatch ? decodeURIComponent(hashMatch[1]) : null);
       const refreshed = requestedId ? data.notes.find((note) => note.id === requestedId) : undefined;
       if (refreshed && (!currentId || !dirtyRef.current)) selectDraft(refreshed.id, refreshed);
-      setAccessRequired(false);
     } catch (error) {
-      if (error instanceof RequestError && error.code === "ACCESS_REQUIRED") setAccessRequired(true);
-      else setLoadError(error instanceof Error ? error.message : "Notes couldn’t load.");
+      setLoadError(error instanceof Error ? error.message : "Notes couldn’t load.");
     } finally {
       setLoading(false);
     }
@@ -482,8 +461,6 @@ export function PikaNoteApp() {
             ? "Newer copy found"
             : "Saved";
 
-  if (accessRequired) return <AccessRequired onRetry={() => void loadNotes()} />;
-
   return (
     <main className={`app-shell${selectedId ? " has-editor" : ""}`}>
       <aside className="note-browser" aria-label="Notes">
@@ -492,9 +469,10 @@ export function PikaNoteApp() {
             <BrandMark small />
             <div><strong>Pika Note</strong><span>Keep a thought. Find it fast.</span></div>
           </div>
-          <span className="privacy-pill"><span aria-hidden="true">●</span> Private</span>
+          <span className="sharing-pill"><span aria-hidden="true">●</span> Public</span>
         </header>
 
+        <div className="status-banner">Shared notebook — anyone with the link can view, edit, and delete notes and photos.</div>
         {!online ? <div className="status-banner status-banner--offline">You’re offline. Open notes stay here; changes sync when you reconnect.</div> : null}
         {loadError ? <div className="status-banner status-banner--error">{loadError}<button onClick={() => void loadNotes()}>Retry</button></div> : null}
 
@@ -638,7 +616,7 @@ export function PikaNoteApp() {
           <section className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-title">
             <span className="dialog-mark" aria-hidden="true">×</span>
             <h2 id="delete-title">Delete this note?</h2>
-            <p>“{noteTitle(draft)}” and all its photos will be permanently removed.</p>
+            <p>“{noteTitle(draft)}” and all its photos will be permanently removed for everyone.</p>
             <div><button className="secondary-button" autoFocus onClick={() => setDeleteOpen(false)}>Keep note</button><button className="danger-button" onClick={() => void deleteNote()}>Delete forever</button></div>
           </section>
         </div>

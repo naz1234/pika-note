@@ -32,32 +32,23 @@ This checklist assumes you want to upload the ZIP to GitHub yourself and then co
 
 Wrangler will provision one D1 binding named `DB` and one private R2 binding named `NOTE_IMAGES`. The first note request creates the initial tables. This may add a little time to the first-ever load only.
 
-## 3. Make the notebook private
+## 3. Keep the notebook public
 
-Do this immediately after the first deployment.
+New deployments require no login setup. Anyone with the URL can view and change the same notes and photos, including deleting them permanently. Only store content intended for public sharing.
 
-1. Open the new Worker in Cloudflare.
-2. Go to **Settings → Domains & Routes**.
-3. Find the `pika-note.<your-account>.workers.dev` route.
-4. Open its menu and choose **Enable Cloudflare Access**.
-5. Create an Allow policy for your own email address only. Email one-time PIN is convenient on mobile.
-6. Make sure the policy covers the whole host (`/*`), including APIs and images.
-7. In **Zero Trust → Access controls → Applications**, open the application and copy its **Application Audience (AUD) Tag** from **Additional settings**.
-8. Copy your team domain. It looks like `https://your-team-name.cloudflareaccess.com` and appears in the Zero Trust team settings.
-9. Return to **Workers & Pages → pika-note → Settings → Variables and Secrets** and add these two text variables:
+If upgrading the old private version:
 
-   | Variable | Value |
-   |---|---|
-   | `TEAM_DOMAIN` | `https://your-team-name.cloudflareaccess.com` |
-   | `POLICY_AUD` | the Application Audience (AUD) Tag you copied |
+1. Deploy the updated `main` branch to the existing `pika-note` Worker. Keep the original `DB` and `NOTE_IMAGES` bindings so existing data stays available. No database reset or owner migration is needed.
+2. In the Worker's **Access** settings, disable the protection for Pika Note. Also check **Zero Trust → Access controls → Applications** for rules protecting this app's `workers.dev` hostname, custom domain, or paths. Remove only the Pika Note-specific protection.
+3. If account-wide Worker protection applies, create a public exception for Pika Note following [Cloudflare's guide](https://developers.cloudflare.com/workers/configuration/cloudflare-access/#make-a-worker-public-when-all-workers-are-protected). Keep other Workers protected.
+4. The old `TEAM_DOMAIN` and `POLICY_AUD` variables are no longer used and may be removed from Pika Note's settings.
+5. Wait for the deployment to finish, then open the app in a private/incognito window. It should open without a login and show the existing shared notes.
 
-10. Save the variables, then open the Worker URL. Complete the Cloudflare sign-in and Pika Note will load.
-
-Pika Note shows a locked setup screen until both variables are present and the Access session’s signature, issuer, audience, expiry, and email all pass verification.
+Cloudflare Access is configured outside this repository. Merging or deploying this code does not remove an existing edge login rule. If a Cloudflare login screen remains, check all Access rules covering this app; do not disable the `workers.dev` route itself.
 
 ## 4. Open it on another device
 
-Open the same `workers.dev` URL on the other phone, tablet, or computer and sign in with the same allowed email. Notes and photos come from the same D1/R2 storage, so they stay in sync.
+Open the exact same app URL on another phone, tablet, or computer. No account is needed. Create a test note and add a photo on one device, then reload or return to the app on the second device to see them. Edits, archive/restore, and deletion affect everyone using the notebook. Concurrent stale edits show a conflict choice instead of silently overwriting another saved copy.
 
 On iPhone or Android, use the browser’s **Add to Home Screen** or **Install app** option for an app-like shortcut.
 
@@ -92,4 +83,4 @@ No manual SQL paste is required for the initial version because Pika Note create
 
 ## Custom domain (optional)
 
-After the `workers.dev` version works, add a custom domain under **Settings → Domains & Routes**. Protect that hostname with the same Cloudflare Access policy. Keep the `workers.dev` route protected too so it cannot bypass your custom-domain policy.
+After the `workers.dev` version works, add a custom domain under **Settings → Domains & Routes**. Leave that hostname public as well. Remove any Pika Note-specific Access protection covering it, and verify both URLs in a private/incognito window. Keep the same D1 and R2 bindings; do not make the R2 bucket public.

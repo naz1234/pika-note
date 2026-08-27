@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Pika Note",
     short_name: "Pika Note",
-    description: "Private notes and photos, synced across your devices.",
+    description: "Public, shared notes and photos. No login needed.",
     start_url: "/",
     display: "standalone",
     background_color: "#f7f3e8",

@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(baseUrl),
     title: "Pika Note — Your notes, wherever you are",
-    description: "A private, mobile-friendly notebook for thoughts and photos that stays in sync across your devices.",
+    description: "A public, shared notebook for thoughts and photos. No login needed, with cloud storage across devices.",
     applicationName: "Pika Note",
     manifest: "/manifest.webmanifest",
     appleWebApp: {

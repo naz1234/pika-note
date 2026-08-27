@@ -1,8 +1,8 @@
-import { and, count, eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { ensureSchema, getDb, getImageBucket } from "../../../../../db";
 import { noteImages, notes } from "../../../../../db/schema";
 import { imageDto } from "../../../../../lib/note-dto";
-import { ApiError, apiError, apiJson, requireOwner, requireSameOrigin } from "../../../../../lib/server";
+import { ApiError, apiError, apiJson, SHARED_NOTEBOOK_OWNER, requireSameOrigin } from "../../../../../lib/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -20,17 +20,16 @@ export async function POST(request: Request, context: RouteContext) {
   let uploadedKey: string | null = null;
   try {
     requireSameOrigin(request);
-    const owner = await requireOwner(request);
     const { id: noteId } = await context.params;
     const contentLength = Number(request.headers.get("content-length") ?? "0");
     if (contentLength > MAX_IMAGE_BYTES + 512_000) throw new ApiError(413, "That image is larger than 10 MB.", "IMAGE_TOO_LARGE");
 
     await ensureSchema();
     const db = getDb();
-    const [note] = await db.select({ id: notes.id }).from(notes).where(and(eq(notes.id, noteId), eq(notes.owner, owner))).limit(1);
+    const [note] = await db.select({ id: notes.id }).from(notes).where(eq(notes.id, noteId)).limit(1);
     if (!note) throw new ApiError(404, "That note was not found.", "NOT_FOUND");
     const [{ value: imageCount }] = await db.select({ value: count() }).from(noteImages)
-      .where(and(eq(noteImages.noteId, noteId), eq(noteImages.owner, owner)));
+      .where(eq(noteImages.noteId, noteId));
     if (imageCount >= MAX_IMAGES_PER_NOTE) throw new ApiError(400, "A note can hold up to 12 images.", "IMAGE_LIMIT");
 
     const form = await request.formData();
@@ -53,14 +52,14 @@ export async function POST(request: Request, context: RouteContext) {
     const [created] = await db.insert(noteImages).values({
       id: imageId,
       noteId,
-      owner,
+      owner: SHARED_NOTEBOOK_OWNER,
       objectKey: uploadedKey,
       originalName,
       mimeType: detectedType,
       byteSize: image.size,
       createdAt: now,
     }).returning();
-    await db.update(notes).set({ updatedAt: now }).where(and(eq(notes.id, noteId), eq(notes.owner, owner)));
+    await db.update(notes).set({ updatedAt: now }).where(eq(notes.id, noteId));
     return apiJson({ attachment: imageDto(created) }, 201);
   } catch (error) {
     if (uploadedKey) {
