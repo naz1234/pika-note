@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { ensureSchema, getDb, getImageBucket } from "../../../../db";
 import { noteImages, notes, NOTE_COLORS } from "../../../../db/schema";
 import { noteDto } from "../../../../lib/note-dto";
-import { ApiError, apiError, apiJson, cleanText, requireJson, requireOwner, requireSameOrigin } from "../../../../lib/server";
+import { ApiError, apiError, apiJson, cleanText, requireJson, requireSameOrigin } from "../../../../lib/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -10,7 +10,6 @@ export async function PATCH(request: Request, context: RouteContext) {
   try {
     requireSameOrigin(request);
     requireJson(request);
-    const owner = await requireOwner(request);
     const { id } = await context.params;
     const payload = (await request.json()) as Record<string, unknown>;
     const expectedVersion = payload.expectedVersion;
@@ -20,7 +19,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     await ensureSchema();
     const db = getDb();
-    const [current] = await db.select().from(notes).where(and(eq(notes.id, id), eq(notes.owner, owner))).limit(1);
+    const [current] = await db.select().from(notes).where(eq(notes.id, id)).limit(1);
     if (!current) throw new ApiError(404, "That note was not found.", "NOT_FOUND");
 
     const title = payload.title === undefined ? current.title : cleanText(payload.title, "Title", 200);
@@ -44,20 +43,20 @@ export async function PATCH(request: Request, context: RouteContext) {
         version: sql`${notes.version} + 1`,
         updatedAt: new Date().toISOString(),
       })
-      .where(and(eq(notes.id, id), eq(notes.owner, owner), eq(notes.version, Number(expectedVersion))))
+      .where(and(eq(notes.id, id), eq(notes.version, Number(expectedVersion))))
       .returning();
 
     if (!updated) {
-      const [latest] = await db.select().from(notes).where(and(eq(notes.id, id), eq(notes.owner, owner))).limit(1);
+      const [latest] = await db.select().from(notes).where(eq(notes.id, id)).limit(1);
       const images = latest
-        ? await db.select().from(noteImages).where(and(eq(noteImages.noteId, id), eq(noteImages.owner, owner)))
+        ? await db.select().from(noteImages).where(eq(noteImages.noteId, id))
         : [];
       throw new ApiError(409, "This note changed on another device.", "VERSION_CONFLICT", {
         latest: latest ? noteDto(latest, images) : null,
       });
     }
 
-    const images = await db.select().from(noteImages).where(and(eq(noteImages.noteId, id), eq(noteImages.owner, owner)));
+    const images = await db.select().from(noteImages).where(eq(noteImages.noteId, id));
     return apiJson({ note: noteDto(updated, images) });
   } catch (error) {
     return apiError(error);
@@ -67,18 +66,17 @@ export async function PATCH(request: Request, context: RouteContext) {
 export async function DELETE(request: Request, context: RouteContext) {
   try {
     requireSameOrigin(request);
-    const owner = await requireOwner(request);
     const { id } = await context.params;
     await ensureSchema();
     const db = getDb();
-    const [current] = await db.select({ id: notes.id }).from(notes).where(and(eq(notes.id, id), eq(notes.owner, owner))).limit(1);
+    const [current] = await db.select({ id: notes.id }).from(notes).where(eq(notes.id, id)).limit(1);
     if (!current) throw new ApiError(404, "That note was not found.", "NOT_FOUND");
 
     const images = await db.select({ id: noteImages.id, objectKey: noteImages.objectKey })
       .from(noteImages)
-      .where(and(eq(noteImages.noteId, id), eq(noteImages.owner, owner)));
-    await db.delete(noteImages).where(and(eq(noteImages.noteId, id), eq(noteImages.owner, owner)));
-    await db.delete(notes).where(and(eq(notes.id, id), eq(notes.owner, owner)));
+      .where(eq(noteImages.noteId, id));
+    await db.delete(noteImages).where(eq(noteImages.noteId, id));
+    await db.delete(notes).where(eq(notes.id, id));
 
     if (images.length) {
       try {

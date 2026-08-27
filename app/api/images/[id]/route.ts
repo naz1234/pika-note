@@ -1,17 +1,16 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { ensureSchema, getDb, getImageBucket } from "../../../../db";
 import { noteImages, notes } from "../../../../db/schema";
-import { ApiError, apiError, apiJson, requireOwner, requireSameOrigin } from "../../../../lib/server";
+import { ApiError, apiError, apiJson, requireSameOrigin } from "../../../../lib/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, context: RouteContext) {
   try {
-    const owner = await requireOwner(request);
     const { id } = await context.params;
     await ensureSchema();
     const [image] = await getDb().select().from(noteImages)
-      .where(and(eq(noteImages.id, id), eq(noteImages.owner, owner))).limit(1);
+      .where(eq(noteImages.id, id)).limit(1);
     if (!image) throw new ApiError(404, "That image was not found.", "NOT_FOUND");
     const object = await getImageBucket().get(image.objectKey);
     if (!object) throw new ApiError(404, "That image was not found in storage.", "NOT_FOUND");
@@ -36,16 +35,15 @@ export async function GET(request: Request, context: RouteContext) {
 export async function DELETE(request: Request, context: RouteContext) {
   try {
     requireSameOrigin(request);
-    const owner = await requireOwner(request);
     const { id } = await context.params;
     await ensureSchema();
     const db = getDb();
     const [image] = await db.select().from(noteImages)
-      .where(and(eq(noteImages.id, id), eq(noteImages.owner, owner))).limit(1);
+      .where(eq(noteImages.id, id)).limit(1);
     if (!image) throw new ApiError(404, "That image was not found.", "NOT_FOUND");
-    await db.delete(noteImages).where(and(eq(noteImages.id, id), eq(noteImages.owner, owner)));
+    await db.delete(noteImages).where(eq(noteImages.id, id));
     await db.update(notes).set({ updatedAt: new Date().toISOString() })
-      .where(and(eq(notes.id, image.noteId), eq(notes.owner, owner)));
+      .where(eq(notes.id, image.noteId));
     try { await getImageBucket().delete(image.objectKey); } catch (cleanupError) {
       console.error("Pika Note could not clean up an R2 image", cleanupError);
     }

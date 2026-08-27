@@ -4,8 +4,6 @@ interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
   NOTE_IMAGES: R2Bucket;
-  TEAM_DOMAIN?: string;
-  POLICY_AUD?: string;
 }
 
 interface ExecutionContext {

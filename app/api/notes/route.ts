@@ -1,18 +1,17 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { ensureSchema, getDb } from "../../../db";
 import { noteImages, notes, NOTE_COLORS } from "../../../db/schema";
 import { noteDto } from "../../../lib/note-dto";
-import { ApiError, apiError, apiJson, cleanText, requireJson, requireOwner, requireSameOrigin } from "../../../lib/server";
+import { ApiError, apiError, apiJson, cleanText, requireJson, SHARED_NOTEBOOK_OWNER, requireSameOrigin } from "../../../lib/server";
 
 export async function GET(request: Request) {
   try {
-    const owner = await requireOwner(request);
     await ensureSchema();
     const db = getDb();
     const archived = new URL(request.url).searchParams.get("archived");
     const where = archived === "all"
-      ? eq(notes.owner, owner)
-      : and(eq(notes.owner, owner), eq(notes.isArchived, archived === "1"));
+      ? undefined
+      : eq(notes.isArchived, archived === "1");
     const rows = await db
       .select()
       .from(notes)
@@ -24,7 +23,7 @@ export async function GET(request: Request) {
       ? await db
           .select()
           .from(noteImages)
-          .where(and(eq(noteImages.owner, owner), inArray(noteImages.noteId, rows.map((note) => note.id))))
+          .where(inArray(noteImages.noteId, rows.map((note) => note.id)))
           .orderBy(desc(noteImages.createdAt))
       : [];
     const byNote = new Map<string, typeof images>();
@@ -40,7 +39,6 @@ export async function POST(request: Request) {
   try {
     requireSameOrigin(request);
     requireJson(request);
-    const owner = await requireOwner(request);
     const payload = (await request.json()) as Record<string, unknown>;
     const title = cleanText(payload.title ?? "", "Title", 200);
     const content = cleanText(payload.content ?? "", "Note", 100_000);
@@ -50,7 +48,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const note = {
       id: crypto.randomUUID(),
-      owner,
+      owner: SHARED_NOTEBOOK_OWNER,
       title,
       content,
       color,
