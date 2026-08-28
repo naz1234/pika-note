@@ -3,11 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <meta name="theme-color" content="#f7f3e8" />
+    <meta name="theme-color" content="#fff5fb" media="(max-width: 799px)" />
+    <meta name="theme-color" content="#f7f3e8" media="(min-width: 800px)" />
     <title>Pika Note — Offline</title>
     <style>
-      *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:32px;background:#f7f3e8;color:#24231f;font:16px/1.55 ui-rounded,"SF Pro Rounded","Segoe UI",sans-serif}.card{max-width:420px;padding:34px;border:1px solid #d9d2c1;border-radius:26px;background:#fffdf7;box-shadow:8px 8px 0 #e6ddc8}.mark{width:58px;height:58px;display:grid;place-items:center;margin-bottom:24px;border-radius:17px;background:#f4c84a;font-size:27px;font-weight:900}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6b675e}h1{margin:8px 0 10px;font-size:30px;line-height:1.1}p{margin:0;color:#625f57}button{margin-top:24px;min-height:48px;padding:0 20px;border:1px solid #24231f;border-radius:999px;background:#24231f;color:#fff;font:inherit;font-weight:750;cursor:pointer}
+      *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:32px;background:#f7f3e8;color:#24231f;font:16px/1.55 ui-rounded,"SF Pro Rounded","Segoe UI",sans-serif}.card{max-width:420px;padding:34px;border:1px solid #d9d2c1;border-radius:26px;background:#fffdf7;box-shadow:8px 8px 0 #e6ddc8}.mark{display:block;width:80px;height:80px;margin-bottom:24px;object-fit:contain}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6b675e}h1{margin:8px 0 10px;font-size:30px;line-height:1.1}p{margin:0;color:#625f57}button{margin-top:24px;min-height:48px;padding:0 20px;border:1px solid #24231f;border-radius:999px;background:#24231f;color:#fff;font:inherit;font-weight:750;cursor:pointer}
+      @media(max-width:799px){body{background:linear-gradient(155deg,#fff5fb,#f7effd);color:#342044}.card{border-color:#dec9e7;background:#fffaff;box-shadow:0 12px 32px rgba(106,53,127,.12)}.eyebrow,p{color:#756280}button{border-color:#713083;background:linear-gradient(135deg,#913c9a,#713083)}button:focus-visible{outline:3px solid #713083;outline-offset:3px}}
     </style>
   </head>
-  <body><main class="card"><div class="mark" aria-hidden="true">✦</div><div class="eyebrow">Pika Note</div><h1>You’re offline.</h1><p>Your notebook will be ready again as soon as this device reconnects.</p><button onclick="location.reload()">Try again</button></main></body>
+  <body><main class="card"><img class="mark" src="/icon-192.png?v=2" width="80" height="80" alt="" aria-hidden="true" /><div class="eyebrow">Pika Note</div><h1>You’re offline.</h1><p>Your notebook will be ready again as soon as this device reconnects.</p><button onclick="location.reload()">Try again</button></main></body>
 </html>
