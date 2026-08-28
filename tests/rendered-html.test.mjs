@@ -38,8 +38,14 @@ test("ships Cloudflare persistence and installable-app assets", async () => {
   assert.match(migration, /CREATE TABLE `notes`/);
   assert.match(migration, /CREATE TABLE `note_images`/);
   assert.doesNotMatch(serviceWorker, /\/api\/.+cache/i);
-  await access(new URL("../public/icon-192.png", import.meta.url));
-  await access(new URL("../public/icon-512.png", import.meta.url));
+  for (const [name, size] of [["favicon-32.png", 32], ["icon-192.png", 192], ["icon-512.png", 512], ["apple-touch-icon.png", 180]]) {
+    const source = await readFile(new URL(`../public/${name}`, import.meta.url));
+    const built = await readFile(new URL(`../dist/client/${name}`, import.meta.url));
+    assert.deepEqual(source.subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), `${name} is a PNG`);
+    assert.equal(source.readUInt32BE(16), size, `${name} width`);
+    assert.equal(source.readUInt32BE(20), size, `${name} height`);
+    assert.deepEqual(built, source, `${name} is included unchanged in the deployable assets`);
+  }
   await access(new URL("../public/og.png", import.meta.url));
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
   await assert.rejects(access(new URL("../app/_sites-preview/preview.css", import.meta.url)));
