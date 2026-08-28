@@ -94,8 +94,19 @@ function readConnection() {
   return navigator.onLine;
 }
 
-function BrandMark({ small = false }: { small?: boolean }) {
-  return <span className={`brand-mark${small ? " brand-mark--small" : ""}`} aria-hidden="true"><span>✦</span></span>;
+function BrandMark({ size = "medium" }: { size?: "small" | "medium" | "large" }) {
+  const pixels = size === "small" ? 48 : size === "large" ? 144 : 80;
+  return (
+    <img
+      className={`brand-mark brand-mark--${size}`}
+      src={size === "large" ? "/icon-512.png?v=2" : "/icon-192.png?v=2"}
+      width={pixels}
+      height={pixels}
+      alt=""
+      aria-hidden="true"
+      decoding="async"
+    />
+  );
 }
 
 function LoadingCards() {
@@ -466,7 +477,7 @@ export function PikaNoteApp() {
       <aside className="note-browser" aria-label="Notes">
         <header className="browser-header">
           <div className="brand-lockup">
-            <BrandMark small />
+            <BrandMark size="small" />
             <div><strong>Pika Note</strong><span>Keep a thought. Find it fast.</span></div>
           </div>
           <span className="sharing-pill"><span aria-hidden="true">●</span> Public</span>
@@ -602,7 +613,7 @@ export function PikaNoteApp() {
           </article>
         ) : (
           <div className="editor-welcome">
-            <div className="welcome-stack" aria-hidden="true"><span /><span /><span /></div>
+            <BrandMark size="large" />
             <p className="eyebrow">Pika Note</p>
             <h1>A little space for what matters.</h1>
             <p>Pick a note from the left, or start a fresh one. Your words and photos save to the cloud automatically.</p>

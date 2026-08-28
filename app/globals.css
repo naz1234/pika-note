@@ -61,38 +61,17 @@ img { display: block; max-width: 100%; }
 .brand-lockup { display: flex; min-width: 0; align-items: center; gap: 11px; }
 .brand-lockup > div { min-width: 0; }
 .brand-lockup strong { display: block; font-size: 20px; font-weight: 820; letter-spacing: -0.035em; line-height: 1.05; }
-.brand-lockup span:not(.brand-mark) { display: block; margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 11px; font-weight: 620; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.brand-lockup > div > span { display: block; margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 11px; font-weight: 620; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 
 .brand-mark {
-  position: relative;
-  display: inline-grid;
-  width: 62px;
-  height: 62px;
+  display: block;
+  width: 80px;
+  height: 80px;
   flex: 0 0 auto;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid rgba(36, 35, 31, 0.25);
-  border-radius: 18px 18px 24px 18px;
-  background: var(--yellow);
-  box-shadow: 5px 5px 0 rgba(36, 35, 31, 0.13);
+  object-fit: contain;
 }
-.brand-mark::after {
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 18px;
-  height: 18px;
-  border-left: 1px solid rgba(36, 35, 31, 0.18);
-  border-top: 1px solid rgba(36, 35, 31, 0.18);
-  background: #ffe685;
-  content: "";
-  transform: skew(-10deg, -10deg);
-  transform-origin: bottom right;
-}
-.brand-mark > span { position: relative; z-index: 1; font-size: 27px; transform: rotate(-7deg); }
-.brand-mark--small { width: 43px; height: 43px; border-radius: 13px 13px 17px 13px; box-shadow: 3px 3px 0 rgba(36, 35, 31, 0.12); }
-.brand-mark--small::after { width: 12px; height: 12px; }
-.brand-mark--small > span { font-size: 18px; }
+.brand-mark--small { width: 48px; height: 48px; }
+.brand-mark--large { width: 144px; height: 144px; }
 
 .sharing-pill {
   display: inline-flex;
@@ -241,7 +220,7 @@ img { display: block; max-width: 100%; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
 .empty-list { display: flex; min-height: 55vh; flex-direction: column; align-items: center; justify-content: center; padding: 34px 18px; text-align: center; }
-.empty-list .brand-mark { margin-bottom: 22px; transform: rotate(-3deg); }
+.empty-list .brand-mark { margin-bottom: 22px; }
 .empty-list h2 { max-width: 310px; margin: 0; font-size: 23px; letter-spacing: -0.035em; line-height: 1.18; }
 .empty-list p { max-width: 300px; margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 23px; }
@@ -351,11 +330,7 @@ img { display: block; max-width: 100%; }
 .conflict-card .primary-button, .conflict-card .secondary-button { min-height: 38px; padding: 0 12px; font-size: 11px; }
 
 .editor-welcome { display: flex; width: min(580px, calc(100% - 48px)); min-height: 100dvh; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto; padding: 48px 0; text-align: center; }
-.welcome-stack { position: relative; width: 104px; height: 92px; margin-bottom: 30px; }
-.welcome-stack span { position: absolute; inset: 8px; border: 1px solid var(--ink); border-radius: 18px; background: var(--yellow); box-shadow: 5px 5px 0 rgba(36, 35, 31, 0.15); }
-.welcome-stack span:nth-child(1) { background: var(--sage); transform: translate(-15px, 7px) rotate(-8deg); }
-.welcome-stack span:nth-child(2) { background: var(--coral); transform: translate(14px, -2px) rotate(8deg); }
-.welcome-stack span:nth-child(3) { display: grid; place-items: center; }
+.editor-welcome .brand-mark { margin-bottom: 24px; }
 .editor-welcome .eyebrow { margin: 0 0 9px; }
 .editor-welcome h1 { max-width: 470px; margin: 0; font-size: clamp(35px, 4.5vw, 54px); letter-spacing: -0.055em; line-height: 1.04; }
 .editor-welcome > p:not(.eyebrow) { max-width: 480px; margin: 18px 0 25px; color: var(--muted); font-size: 16px; line-height: 1.6; }
@@ -411,7 +386,7 @@ img { display: block; max-width: 100%; }
 
 @media (max-width: 390px) {
   .sharing-pill { padding: 0 8px; font-size: 10px; }
-  .brand-lockup span:not(.brand-mark) { display: none; }
+  .brand-lockup > div > span { display: none; }
   .editor-header { grid-template-columns: 44px minmax(0, 1fr) auto; padding-right: 7px; padding-left: 7px; }
   .editor-header__actions .icon-button { width: 39px; height: 39px; }
   .save-state { font-size: 10px; }

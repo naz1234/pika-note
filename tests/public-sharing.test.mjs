@@ -70,6 +70,18 @@ test("the deployed notebook is public, shared, and persistent", { timeout: 60_00
     assert.equal(page.status, 200);
     const html = await page.text();
     assert.match(html, /Shared notebook/);
+    for (const [container, size, src, pixels] of [
+      ["brand-lockup", "small", "/icon-192.png?v=2", 48],
+      ["editor-welcome", "large", "/icon-512.png?v=2", 144],
+    ]) {
+      const region = html.split(`class="${container}"`)[1]?.split("</div>")[0] ?? "";
+      const brandImage = region.match(/<img\b[^>]*>/)?.[0] ?? "";
+      assert.ok(brandImage.includes(`class="brand-mark brand-mark--${size}"`), `${container} uses the artwork`);
+      assert.ok(brandImage.includes(`src="${src}"`), `${container} uses the installed app icon`);
+      assert.ok(brandImage.includes(`width="${pixels}"`) && brandImage.includes(`height="${pixels}"`), `${container} reserves a square image area`);
+      assert.ok(brandImage.includes('alt=""') && brandImage.includes('aria-hidden="true"'), `${container} does not repeat adjacent branding to screen readers`);
+    }
+    assert.doesNotMatch(html, /welcome-stack|>✦</);
     const links = html.match(/<link\b[^>]*>/g) ?? [];
     for (const [rel, href, sizes] of [
       ["icon", "/favicon-32.png?v=2", "32x32"],
