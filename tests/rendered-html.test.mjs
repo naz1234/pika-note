@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
 
 test("the production build contains the Pika Note product shell", async () => {
   const assetsUrl = new URL("../dist/client/assets/", import.meta.url);
@@ -49,4 +50,70 @@ test("ships Cloudflare persistence and installable-app assets", async () => {
   await access(new URL("../public/og.png", import.meta.url));
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
   await assert.rejects(access(new URL("../app/_sites-preview/preview.css", import.meta.url)));
+});
+
+test("the mobile palette keeps text and primary controls readable", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const mobileRoot = css.match(/@media\s*\(max-width:\s*799px\)\s*\{\s*:root\s*\{([^}]+)\}/)?.[1];
+  assert.ok(mobileRoot, "the icon palette is scoped to mobile screens");
+  const colors = Object.fromEntries([...mobileRoot.matchAll(/(--[\w-]+):\s*(#[\da-f]{6})/gi)].map((match) => [match[1], match[2]]));
+  const luminance = (hex) => {
+    assert.match(hex, /^#[\da-f]{6}$/i);
+    const linear = [1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16) / 255)
+      .map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+    return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+  };
+  for (const [foreground, background] of [
+    [colors["--ink"], colors["--paper"]],
+    [colors["--ink"], colors["--card"]],
+    [colors["--muted"], colors["--paper"]],
+    [colors["--muted"], colors["--card"]],
+    [colors["--muted"], "#f7ebfc"],
+    ["#ffffff", colors["--accent"]],
+    ["#ffffff", colors["--accent-deep"]],
+  ]) {
+    const [dark, light] = [luminance(foreground), luminance(background)].sort((a, b) => a - b);
+    const ratio = (light + 0.05) / (dark + 0.05);
+    assert.ok(ratio >= 4.5, `${foreground} on ${background} has ${ratio.toFixed(2)}:1 contrast; expected at least 4.5:1`);
+  }
+});
+
+test("the offline screen and its artwork load from cache without caching API data", async () => {
+  const [source, offline] = await Promise.all([
+    readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
+    readFile(new URL("../public/offline.html", import.meta.url), "utf8"),
+  ]);
+  const handlers = new Map();
+  const cache = new Map([
+    ["/offline.html", offline],
+    ["/icon-192.png?v=2", await readFile(new URL("../public/icon-192.png", import.meta.url))],
+  ]);
+  runInNewContext(source, {
+    URL,
+    self: { location: { origin: "https://pika-note.example" }, addEventListener: (event, handler) => handlers.set(event, handler) },
+    fetch: async () => { throw new Error("Offline"); },
+    caches: { match: async (request) => {
+      const url = new URL(typeof request === "string" ? request : request.url, "https://pika-note.example");
+      const body = cache.get(`${url.pathname}${url.search}`);
+      return body === undefined ? undefined : new Response(body);
+    } },
+  });
+  const fetchEvent = (path, mode) => {
+    let response;
+    handlers.get("fetch")({
+      request: { url: new URL(path, "https://pika-note.example").href, method: "GET", mode },
+      respondWith: (value) => { response = value; },
+    });
+    return response;
+  };
+  const page = await fetchEvent("/", "navigate");
+  const html = await page.text();
+  assert.match(html, /You’re offline/);
+  const icon = html.match(/<img\b[^>]*src="([^"]+)"/)?.[1];
+  assert.ok(icon, "offline screen references the app artwork");
+  const image = await fetchEvent(icon, "no-cors");
+  assert.deepEqual(Buffer.from(await image.arrayBuffer()), cache.get(icon));
+  assert.equal(fetchEvent("/api/notes", "cors"), undefined);
+  assert.equal(fetchEvent("/api/images/example", "no-cors"), undefined);
+  assert.equal(fetchEvent("/other-image.png", "no-cors"), undefined);
 });

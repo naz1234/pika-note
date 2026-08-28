@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Public, shared notes and photos. No login needed.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f7f3e8",
-    theme_color: "#f7f3e8",
+    background_color: "#fff5fb",
+    theme_color: "#fff5fb",
     orientation: "any",
     icons: [
       // Keep the complete artwork visible rather than allowing a launcher to crop it.

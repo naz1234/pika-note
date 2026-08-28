@@ -6,7 +6,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f7f3e8",
+  themeColor: [
+    { media: "(max-width: 799px)", color: "#fff5fb" },
+    { media: "(min-width: 800px)", color: "#f7f3e8" },
+  ],
 };
 
 export async function generateMetadata(): Promise<Metadata> {

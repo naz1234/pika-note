@@ -82,6 +82,10 @@ test("the deployed notebook is public, shared, and persistent", { timeout: 60_00
       assert.ok(brandImage.includes('alt=""') && brandImage.includes('aria-hidden="true"'), `${container} does not repeat adjacent branding to screen readers`);
     }
     assert.doesNotMatch(html, /welcome-stack|>✦</);
+    const metaTags = html.match(/<meta\b[^>]*>/g) ?? [];
+    for (const [media, color] of [["(max-width: 799px)", "#fff5fb"], ["(min-width: 800px)", "#f7f3e8"]]) {
+      assert.ok(metaTags.some((tag) => tag.includes('name="theme-color"') && tag.includes(`media="${media}"`) && tag.includes(`content="${color}"`)), `Browser chrome matches the ${media} theme`);
+    }
     const links = html.match(/<link\b[^>]*>/g) ?? [];
     for (const [rel, href, sizes] of [
       ["icon", "/favicon-32.png?v=2", "32x32"],
@@ -93,6 +97,8 @@ test("the deployed notebook is public, shared, and persistent", { timeout: 60_00
     }
     assert.ok(links.some((link) => link.includes('rel="manifest"') && link.includes(`href="${origin}/manifest.webmanifest"`)));
     const manifest = await json(await alice("/manifest.webmanifest"));
+    assert.equal(manifest.background_color, "#fff5fb");
+    assert.equal(manifest.theme_color, "#fff5fb");
     assert.deepEqual(manifest.icons, [
       { src: "/icon-192.png?v=2", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icon-512.png?v=2", sizes: "512x512", type: "image/png", purpose: "any" },

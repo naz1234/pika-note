@@ -1,4 +1,4 @@
-const CACHE = "pika-note-shell-v2";
+const CACHE = "pika-note-shell-v3";
 const OFFLINE_ASSETS = ["/offline.html", "/icon-192.png?v=2", "/icon-512.png?v=2"];
 
 self.addEventListener("install", (event) => {
@@ -19,5 +19,7 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).catch(() => caches.match("/offline.html")));
+  } else if (OFFLINE_ASSETS.includes(`${url.pathname}${url.search}`)) {
+    event.respondWith(caches.match(request, { cacheName: CACHE }).then((cached) => cached ?? fetch(request)));
   }
 });
