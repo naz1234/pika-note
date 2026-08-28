@@ -28,10 +28,11 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: {
       icon: [
-        { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
-        { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+        { url: "/favicon-32.png?v=2", type: "image/png", sizes: "32x32" },
+        { url: "/icon-192.png?v=2", type: "image/png", sizes: "192x192" },
+        { url: "/icon-512.png?v=2", type: "image/png", sizes: "512x512" },
       ],
-      apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+      apple: [{ url: "/apple-touch-icon.png?v=2", type: "image/png", sizes: "180x180" }],
     },
     openGraph: {
       type: "website",

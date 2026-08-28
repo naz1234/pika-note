@@ -11,8 +11,9 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#f7f3e8",
     orientation: "any",
     icons: [
-      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
-      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      // Keep the complete artwork visible rather than allowing a launcher to crop it.
+      { src: "/icon-192.png?v=2", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png?v=2", sizes: "512x512", type: "image/png", purpose: "any" },
     ],
   };
 }

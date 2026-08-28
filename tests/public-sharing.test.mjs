@@ -68,7 +68,23 @@ test("the deployed notebook is public, shared, and persistent", { timeout: 60_00
   await t.test("anonymous visitors can open the app and API without Access settings", async () => {
     const page = await alice("/");
     assert.equal(page.status, 200);
-    assert.match(await page.text(), /Shared notebook/);
+    const html = await page.text();
+    assert.match(html, /Shared notebook/);
+    const links = html.match(/<link\b[^>]*>/g) ?? [];
+    for (const [rel, href, sizes] of [
+      ["icon", "/favicon-32.png?v=2", "32x32"],
+      ["icon", "/icon-192.png?v=2", "192x192"],
+      ["icon", "/icon-512.png?v=2", "512x512"],
+      ["apple-touch-icon", "/apple-touch-icon.png?v=2", "180x180"],
+    ]) {
+      assert.ok(links.some((link) => link.includes(`rel="${rel}"`) && link.includes(`href="${origin}${href}"`) && link.includes(`sizes="${sizes}"`)), `App metadata links to ${href}`);
+    }
+    assert.ok(links.some((link) => link.includes('rel="manifest"') && link.includes(`href="${origin}/manifest.webmanifest"`)));
+    const manifest = await json(await alice("/manifest.webmanifest"));
+    assert.deepEqual(manifest.icons, [
+      { src: "/icon-192.png?v=2", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png?v=2", sizes: "512x512", type: "image/png", purpose: "any" },
+    ]);
     const response = await alice("/api/notes?archived=all");
     assert.equal(response.headers.get("cache-control"), "no-store");
     assert.deepEqual(await json(response), { notes: [] });
